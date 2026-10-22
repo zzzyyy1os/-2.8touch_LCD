@@ -7,6 +7,7 @@
 #define USE_HORIZONTAL 0  //设置横屏或者竖屏显示 0或1为竖屏 2或3为横屏
 
 #define LCD_SPI_PORT SPI2_HOST
+#define LCD_SPI_FREQ_HZ (10 * 1000 * 1000)  // SPI 时钟 20M (视频推屏需要带宽); 屏花/不稳降 10M, 稳定可试 40M
 #define LCD_MISO_PIN -1
 #define LCD_SCK_PIN 12
 #define LCD_MOSI_PIN 11

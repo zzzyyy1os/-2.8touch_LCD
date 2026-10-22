@@ -15,7 +15,7 @@ static const spi_bus_config_t buscfg = {
 };
 
 static const spi_device_interface_config_t devcfg = {
-	.clock_speed_hz = SPI_MASTER_FREQ_10M,
+	.clock_speed_hz = LCD_SPI_FREQ_HZ,
 	.mode = 0,					// SPI模式0
 	.spics_io_num = LCD_CS_PIN, // CS引脚
 	.queue_size = 7,			// 我们希望能够一次排队7个事务
@@ -132,112 +132,93 @@ void LCD_Init(void)
 	LCD_RES_Set();
 	vTaskDelay(pdMS_TO_TICKS(100));
 
-	//************* Start Initial Sequence **********//
+//************* Start Initial Sequence (ST7789V, vendor sequence) **********//
 	LCD_WR_REG(0x11);				// Sleep out
-	vTaskDelay(pdMS_TO_TICKS(120)); // Delay 120ms
-	//************* Start Initial Sequence **********//
-	LCD_WR_REG(0xCF);
-	LCD_WR_DATA8(0x00);
-	LCD_WR_DATA8(0xD9);
-	LCD_WR_DATA8(0X30);
-
-	LCD_WR_REG(0xED);
-	LCD_WR_DATA8(0x64);
-	LCD_WR_DATA8(0x03);
-	LCD_WR_DATA8(0X12);
-	LCD_WR_DATA8(0X81);
-
-	LCD_WR_REG(0xE8);
-	LCD_WR_DATA8(0x85);
-	LCD_WR_DATA8(0x10);
-	LCD_WR_DATA8(0x78);
-
-	LCD_WR_REG(0xCB);
-	LCD_WR_DATA8(0x39);
-	LCD_WR_DATA8(0x2C);
-	LCD_WR_DATA8(0x00);
-	LCD_WR_DATA8(0x34);
-	LCD_WR_DATA8(0x02);
-
-	LCD_WR_REG(0xF7);
-	LCD_WR_DATA8(0x20);
-
-	LCD_WR_REG(0xEA);
-	LCD_WR_DATA8(0x00);
-	LCD_WR_DATA8(0x00);
-
-	LCD_WR_REG(0xC0);	// Power control
-	LCD_WR_DATA8(0x21); // VRH[5:0]
-
-	LCD_WR_REG(0xC1);	// Power control
-	LCD_WR_DATA8(0x12); // SAP[2:0];BT[3:0]
-
-	LCD_WR_REG(0xC5); // VCM control
-	LCD_WR_DATA8(0x32);
-	LCD_WR_DATA8(0x3C);
-
-	LCD_WR_REG(0xC7); // VCM control2
-	LCD_WR_DATA8(0XC1);
+	vTaskDelay(pdMS_TO_TICKS(120));
 
 	LCD_WR_REG(0x36); // Memory Access Control
 	if (USE_HORIZONTAL == 0)
-		LCD_WR_DATA8(0x08);
+		LCD_WR_DATA8(0x00);
 	else if (USE_HORIZONTAL == 1)
-		LCD_WR_DATA8(0xC8);
+		LCD_WR_DATA8(0xC0);
 	else if (USE_HORIZONTAL == 2)
-		LCD_WR_DATA8(0x78);
+		LCD_WR_DATA8(0x70);
 	else
-		LCD_WR_DATA8(0xA8);
+		LCD_WR_DATA8(0xA0);
 
 	LCD_WR_REG(0x3A);
-	LCD_WR_DATA8(0x55);
+	LCD_WR_DATA8(0x05);
 
-	LCD_WR_REG(0xB1);
+	LCD_WR_REG(0xB2);
+	LCD_WR_DATA8(0x0C);
+	LCD_WR_DATA8(0x0C);
 	LCD_WR_DATA8(0x00);
-	LCD_WR_DATA8(0x18);
+	LCD_WR_DATA8(0x33);
+	LCD_WR_DATA8(0x33);
 
-	LCD_WR_REG(0xB6); // Display Function Control
-	LCD_WR_DATA8(0x0A);
-	LCD_WR_DATA8(0xA2);
+	LCD_WR_REG(0xB7);
+	LCD_WR_DATA8(0x56);
 
-	LCD_WR_REG(0xF2); // 3Gamma Function Disable
-	LCD_WR_DATA8(0x00);
+	LCD_WR_REG(0xBB);
+	LCD_WR_DATA8(0x20);
 
-	LCD_WR_REG(0x26); // Gamma curve selected
+	LCD_WR_REG(0xC0);
+	LCD_WR_DATA8(0x2C);
+
+	LCD_WR_REG(0xC2);
 	LCD_WR_DATA8(0x01);
 
-	LCD_WR_REG(0xE0); // Set Gamma
+	LCD_WR_REG(0xC3);
 	LCD_WR_DATA8(0x0F);
+
+	LCD_WR_REG(0xC4);
 	LCD_WR_DATA8(0x20);
-	LCD_WR_DATA8(0x1E);
-	LCD_WR_DATA8(0x09);
-	LCD_WR_DATA8(0x12);
-	LCD_WR_DATA8(0x0B);
-	LCD_WR_DATA8(0x50);
-	LCD_WR_DATA8(0XBA);
-	LCD_WR_DATA8(0x44);
-	LCD_WR_DATA8(0x09);
-	LCD_WR_DATA8(0x14);
+
+	LCD_WR_REG(0xC6);
+	LCD_WR_DATA8(0x0F);
+
+	LCD_WR_REG(0xD0);
+	LCD_WR_DATA8(0xA4);
+	LCD_WR_DATA8(0xA1);
+
+	LCD_WR_REG(0xD6);
+	LCD_WR_DATA8(0xA1);
+
+	LCD_WR_REG(0xE0);
+	LCD_WR_DATA8(0xF0);
+	LCD_WR_DATA8(0x00);
+	LCD_WR_DATA8(0x06);
+	LCD_WR_DATA8(0x06);
+	LCD_WR_DATA8(0x07);
 	LCD_WR_DATA8(0x05);
-	LCD_WR_DATA8(0x23);
-	LCD_WR_DATA8(0x21);
+	LCD_WR_DATA8(0x30);
+	LCD_WR_DATA8(0x44);
+	LCD_WR_DATA8(0x48);
+	LCD_WR_DATA8(0x38);
+	LCD_WR_DATA8(0x11);
+	LCD_WR_DATA8(0x10);
+	LCD_WR_DATA8(0x2E);
+	LCD_WR_DATA8(0x34);
+
+	LCD_WR_REG(0xE1);
+	LCD_WR_DATA8(0xF0);
+	LCD_WR_DATA8(0x0A);
+	LCD_WR_DATA8(0x0E);
+	LCD_WR_DATA8(0x0D);
+	LCD_WR_DATA8(0x0B);
+	LCD_WR_DATA8(0x27);
+	LCD_WR_DATA8(0x2F);
+	LCD_WR_DATA8(0x44);
+	LCD_WR_DATA8(0x47);
+	LCD_WR_DATA8(0x35);
+	LCD_WR_DATA8(0x12);
+	LCD_WR_DATA8(0x12);
+	LCD_WR_DATA8(0x2C);
+	LCD_WR_DATA8(0x32);
+
+	LCD_WR_REG(0x35);				// Tearing Effect Line ON
 	LCD_WR_DATA8(0x00);
 
-	LCD_WR_REG(0XE1); // Set Gamma
-	LCD_WR_DATA8(0x00);
-	LCD_WR_DATA8(0x19);
-	LCD_WR_DATA8(0x19);
-	LCD_WR_DATA8(0x00);
-	LCD_WR_DATA8(0x12);
-	LCD_WR_DATA8(0x07);
-	LCD_WR_DATA8(0x2D);
-	LCD_WR_DATA8(0x28);
-	LCD_WR_DATA8(0x3F);
-	LCD_WR_DATA8(0x02);
-	LCD_WR_DATA8(0x0A);
-	LCD_WR_DATA8(0x08);
-	LCD_WR_DATA8(0x25);
-	LCD_WR_DATA8(0x2D);
-	LCD_WR_DATA8(0x0F);
+	LCD_WR_REG(0x21);				// Display inversion ON (IPS must, or whole screen inverted)
 	LCD_WR_REG(0x29); // Display on
 }

@@ -4,8 +4,8 @@
 
 #define TOUCH_OFFSET_X 0
 #define TOUCH_OFFSET_Y 0
-#define REVERSE_X 1
-#define REVERSE_Y 1
+#define REVERSE_X 0
+#define REVERSE_Y 0
 #define TOUCH_MAX_X 239    // mirror baseline X (LCD_W-1)
 #define TOUCH_MAX_Y 319    // mirror baseline Y (LCD_H-1)
 

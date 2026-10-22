@@ -16,6 +16,14 @@
 #include <time.h>
 #include <string.h>
 #include <assert.h>
+
+/* ==================== 引脚标注 ====================
+ * LCD  ILI9341 240x320 (SPI2):  SCK=12  MOSI=11  RES=4  DC=9  CS=10  BLK=5
+ * 触摸 FT6236 (软 I2C):         SDA=15  SCL=16  RST=17  INT=18
+ * SD   TF 卡 (SPI3):            MOSI=13 MISO=14 CLK=21  CS=42   (见 main/sdcard.h)
+ * 避开: Flash 26-32 / USB-JTAG 19,20 / UART0 43,44 / 绑定脚 0,3,45,46 / 八线 PSRAM 35-37
+ * ================================================ */
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/timers.h"
@@ -29,7 +37,9 @@
 #include "esp_now.h"
 #include "esp_crc.h"
 #include "espnow_example.h"
+#include "video_app.h"
 #include "lcd_touch_selftest.h"
+#include "touch_test.h"
 
 #define ESPNOW_MAXDELAY 512
 
@@ -388,9 +398,11 @@ void app_main(void)
     }
     ESP_ERROR_CHECK( ret );
 
-    example_wifi_init();
-    example_espnow_init();
+    // example_wifi_init();
+    // example_espnow_init();
 
-    // LCD + touch porting self-test (see components/lcd_touch/README.md); remove when verified
-    lcd_touch_selftest_start();
+    // ==== 触屏测试模式: INT 中断驱动触摸线程, 屏幕画点 + 串口坐标 ====
+    touch_test_start();
+    // 视频播放模式: 换成 video_app_start(); (SD 卡 /sd/test.mp4)
+    // 显示屏自测模式: 换成 lcd_touch_selftest_start();
 }
