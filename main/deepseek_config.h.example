@@ -1,0 +1,13 @@
+/**
+ * @file deepseek_config.h.example
+ * @brief 复制为 deepseek_config.h 后填 3 个值: API token 和 WiFi 账号密码
+ *        (deepseek_config.h 含密钥, 已被 .gitignore 排除, 不会上传)
+ */
+#ifndef DEEPSEEK_CONFIG_H
+#define DEEPSEEK_CONFIG_H
+
+#define DEEPSEEK_API_TOKEN  "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#define WIFI_SSID           "your-wifi-ssid"
+#define WIFI_PASSWORD       "your-wifi-password"
+
+#endif /* DEEPSEEK_CONFIG_H */
