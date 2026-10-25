@@ -1,0 +1,19 @@
+<!--
+ @title WiFi connected
+ @brief Post-provision status: SSID + IP + reset button.
+
+ ssid / ip label texts are set at runtime (lv_obj_find_by_name "ssid" / "ip").
+ Regenerate *_gen.c from this file in LVGL Pro editor after layout edits;
+ keep widget names (ssid / ip / btn_reset) stable.
+-->
+<screen>
+	<view flex_flow="column" style_flex_main_place="center" style_flex_cross_place="center"
+		style_flex_track_place="center" style_pad_row="12" style_pad_all="12" style_bg_color="0xffffff">
+		<lv_label name="title" text="WiFi Connected" style_text_color="0x16a34a" />
+		<lv_label name="ssid" text="SSID: --" style_text_color="0x374151" />
+		<lv_label name="ip" text="IP: --" style_text_color="0x374151" />
+		<lv_button name="btn_reset" width="140" height="40">
+			<lv_label name="btn_reset_label" align="center" text="Reset WiFi" />
+		</lv_button>
+	</view>
+</screen>

@@ -1,0 +1,5 @@
+dependencies:
+  idf: ">=5.5"
+  # UI 模块 (wifi_provision_ui_lvgl.c / ui/*_gen.c) 需要;
+  # 核心网络文件不依赖 LVGL, 无 LVGL 工程可删掉这些文件并移除本依赖
+  lvgl/lvgl: "^9.5.0"
