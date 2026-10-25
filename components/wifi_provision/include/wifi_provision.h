@@ -50,7 +50,12 @@ typedef struct {
  */
 esp_err_t wifi_provision_start(const wifi_provision_cfg_t *cfg);
 
-/** 清除 NVS 凭据并重启 (nvs_commit 完成后才 esp_restart) */
+/**
+ * @brief 清除凭据并无重启切回配网模式 (不重放开机动画)
+ *
+ * 清 NVS + 内存凭据, 重新进 SoftAP 配网; on_provision_start 会再次触发,
+ * UI 可据此重建/刷新配网界面。可在任意状态调用 (含 STA 连接等待中)。
+ */
 esp_err_t wifi_provision_reset(void);
 
 /** 仅清凭据不重启 */

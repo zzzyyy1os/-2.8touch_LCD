@@ -28,6 +28,14 @@ typedef struct {
  */
 esp_err_t wifi_provision_ui_lvgl_start(const wifi_provision_ui_cfg_t *ui_cfg);
 
+/**
+ * @brief 挂起/放行界面切换 (开机动画期间用)
+ *
+ * hold=true 期间, 回调触发的界面只建不显 (暂存), 动画结束调 hold=false
+ * 一次性放行到最新界面。必须在未持 lvgl 锁的任务上下文调用 (内部自己加锁)。
+ */
+void wifi_provision_ui_lvgl_set_hold(bool hold);
+
 /** 手动切"连接中"界面 (一般由 /connect 自动触发, 无需调用) */
 void wifi_provision_ui_lvgl_show_connecting(const char *ssid);
 

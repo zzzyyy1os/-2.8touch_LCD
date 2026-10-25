@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "lvgl.h"
 #include "lvgl_port.h"
 #include "wifi_provision.h"
@@ -20,10 +21,20 @@ static const char *TAG = "prov_ui";
 static wifi_provision_cfg_t s_net_cfg;      /* 链式接管后的实际配置 */
 static const wifi_provision_cfg_t *s_user_cfg;
 static lv_obj_t *s_scr;                     /* 当前界面 root */
+static bool s_hold;                         /* 开机动画期间挂起界面切换 */
+static lv_obj_t *s_pending;                 /* 挂起期间暂存的最新界面 */
 
 /* ---------- 控件辅助 (均需持 lvgl 锁) ---------- */
 static void screen_swap(lv_obj_t *scr)
 {
+    if (s_hold) {
+        /* 只暂存不显示; 挂起期间多份时只留最新 */
+        if (s_pending && s_pending != scr) {
+            lv_obj_delete(s_pending);
+        }
+        s_pending = scr;
+        return;
+    }
     lv_obj_t *old = s_scr;
     s_scr = scr;
     lv_screen_load(s_scr);              /* 先切新屏再删旧屏, 避免删活动屏 */
@@ -32,11 +43,46 @@ static void screen_swap(lv_obj_t *scr)
     }
 }
 
+void wifi_provision_ui_lvgl_set_hold(bool hold)
+{
+    if (!lvgl_port_lock(2000)) {
+        return;
+    }
+    s_hold = hold;
+    if (!hold && s_pending) {
+        lv_obj_t *p = s_pending;
+        s_pending = NULL;
+        screen_swap(p);                 /* 放行: 挂起期间攒的最新界面上屏 */
+    }
+    lvgl_port_unlock();
+}
+
+static esp_timer_handle_t s_reset_timer;
+
+static void reset_defer_cb(void *arg)
+{
+    (void)arg;
+    /* esp_timer 任务上下文 (未持 lvgl 锁): 清凭据并无重启切回配网,
+     * enter_provision 触发 on_provision_start -> 重建配网页 */
+    wifi_provision_reset();
+}
+
 static void reset_btn_event_cb(lv_event_t *e)
 {
     (void)e;
     ESP_LOGW(TAG, "reset requested, clearing credentials");
-    wifi_provision_reset();             /* 不返回 */
+    /* 事件回调持着 lvgl 锁, 转 esp_timer 任务执行, 避免互斥锁重入 */
+    if (s_reset_timer == NULL) {
+        const esp_timer_create_args_t targs = {
+            .callback = reset_defer_cb,
+            .name = "prov_rst",
+        };
+        if (esp_timer_create(&targs, &s_reset_timer) != ESP_OK) {
+            ESP_LOGE(TAG, "reset timer create failed");
+            return;
+        }
+    }
+    esp_timer_start_once(s_reset_timer, 0);
 }
 
 static void reset_btn_wire(lv_obj_t *root)

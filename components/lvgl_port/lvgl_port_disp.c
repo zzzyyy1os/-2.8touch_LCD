@@ -61,6 +61,22 @@ static void flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
     lv_display_flush_ready(disp);
 }
 
+/* 寄存器写 (lcd_init.c 的 LCD_WR_REG 是 static, 这里补一份, 同 main/lcd_blit.c) */
+static void wr_reg(uint8_t cmd)
+{
+    spi_transaction_t t = { .length = 8, .tx_buffer = &cmd };
+    LCD_DC_Clr();
+    spi_device_polling_transmit(spi, &t);
+    LCD_DC_Set();
+}
+
+void lvgl_port_disp_set_madctl(uint8_t val)
+{
+    wr_reg(0x36);                                       /* Memory Access Control */
+    spi_transaction_t t = { .length = 8, .tx_buffer = &val };
+    spi_device_polling_transmit(spi, &t);
+}
+
 lv_display_t *lvgl_port_disp_create(uint16_t hres, uint16_t vres, uint16_t buf_height)
 {
     uint32_t buf_px = (uint32_t)hres * buf_height;

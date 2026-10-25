@@ -27,9 +27,9 @@ extern "C" {
  **********************/
 
 /**
- * Create the WiFi provisioning (QR) screen.
+ * Create the WiFi provisioning (QR) screen (320x240 landscape).
  * Named widgets for runtime access (lv_obj_find_by_name):
- *   "qrcode" / "ap_info" / "status" / "btn_reset"
+ *   "qrcode" / "hint" / "url" / "btn_reset"
  */
 lv_obj_t * lv_provisioning_screen_create(void);
 

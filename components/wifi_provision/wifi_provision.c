@@ -20,6 +20,7 @@
 static const char *TAG = "wifi_prov";
 
 #define GOT_IP_BIT      BIT0
+#define RESET_BIT       BIT1    /* wifi_provision_reset 切回配网时唤醒 enter_sta 等待 */
 #define DEFAULT_SSID_PREFIX "ESP32-Setup-"
 #define DEFAULT_AP_PASS "12345678"
 #define DEFAULT_TIMEOUT_MS  30000
@@ -221,9 +222,13 @@ static void enter_sta(void)
     int timeout = s_cfg.sta_connect_timeout_ms > 0
                       ? s_cfg.sta_connect_timeout_ms
                       : DEFAULT_TIMEOUT_MS;
-    EventBits_t bits = xEventGroupWaitBits(s_events, GOT_IP_BIT,
-                                           pdFALSE, pdTRUE,
+    EventBits_t bits = xEventGroupWaitBits(s_events, GOT_IP_BIT | RESET_BIT,
+                                           pdFALSE, pdFALSE,
                                            pdMS_TO_TICKS(timeout));
+    if ((bits & RESET_BIT) || s_state != WIFI_PROV_STATE_CONNECTING) {
+        xEventGroupClearBits(s_events, RESET_BIT);
+        return;                 /* 等待期间被 Reset 切回配网, 收尾已交给那边 */
+    }
     if (bits & GOT_IP_BIT) {
         s_state = WIFI_PROV_STATE_CONNECTED;
         ESP_LOGI(TAG, "WiFi connected, ip=%s", s_ip_str);
@@ -302,10 +307,19 @@ esp_err_t wifi_provision_reset(void)
     if (err != ESP_OK) {
         return err;
     }
-    ESP_LOGI(TAG, "credentials cleared, restarting...");
-    vTaskDelay(pdMS_TO_TICKS(100));
-    esp_restart();
-    return ESP_OK;                      /* 不可达 */
+    memset(s_ssid, 0, sizeof(s_ssid));
+    memset(s_pass, 0, sizeof(s_pass));
+
+    if (s_events == NULL) {
+        return ESP_ERR_INVALID_STATE;   /* 未 start, 只清凭据 */
+    }
+    xEventGroupClearBits(s_events, GOT_IP_BIT);
+    xEventGroupSetBits(s_events, RESET_BIT);
+
+    /* 无重启切回配网: enter_provision 里 on_provision_start 会重建配网页 */
+    ESP_LOGW(TAG, "credentials cleared, back to provisioning (no restart)");
+    enter_provision();
+    return ESP_OK;
 }
 
 bool wifi_provision_has_credentials(void)

@@ -18,15 +18,17 @@ extern "C" {
 #endif
 
 typedef struct {
-    uint16_t hres;              /* 0 -> 240 */
-    uint16_t vres;              /* 0 -> 320 */
+    uint16_t hres;              /* 0 -> 320 (横屏) */
+    uint16_t vres;              /* 0 -> 240 (横屏) */
     uint16_t buf_height;        /* partial buffer 行数, 0 -> 40 */
     uint32_t task_stack_size;   /* 0 -> 10240 */
     uint32_t task_priority;     /* 0 -> 5 */
 } lvgl_port_cfg_t;
 
 /**
- * @brief 初始化 LVGL 及板级外设 (LCD 竖屏 240x320, FT6236 轮询 indev)
+ * @brief 初始化 LVGL 及板级外设 (LCD 横屏 320x240, FT6236 轮询 indev)
+ *
+ * 内部切 MADCTL=0x70 使 GRAM 为横屏 320x240; 触摸坐标已映射到同一空间。
  * @param cfg 可为 NULL 走默认值
  */
 esp_err_t lvgl_port_init(const lvgl_port_cfg_t *cfg);

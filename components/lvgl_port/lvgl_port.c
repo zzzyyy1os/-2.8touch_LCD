@@ -23,6 +23,9 @@ static lv_indev_t *s_indev;
 /* lvgl_port_disp.c / lvgl_port_touch.c */
 lv_display_t *lvgl_port_disp_create(uint16_t hres, uint16_t vres, uint16_t buf_height);
 lv_indev_t *lvgl_port_touch_create(void);
+void lvgl_port_disp_set_madctl(uint8_t val);
+
+#define MADCTL_LANDSCAPE 0x70   /* 横屏 320x240 (MX|MV|ML), 同 lcd_init USE_HORIZONTAL==2 / lcd_blit MADCTL_VIDEO */
 
 static uint32_t tick_get_ms(void)
 {
@@ -48,7 +51,7 @@ static void lvgl_task(void *arg)
 esp_err_t lvgl_port_init(const lvgl_port_cfg_t *cfg)
 {
     static lvgl_port_cfg_t def = {
-        .hres = 240, .vres = 320, .buf_height = 40,
+        .hres = 320, .vres = 240, .buf_height = 40,
         .task_stack_size = 10240, .task_priority = 5,
     };
     if (cfg) {
@@ -62,9 +65,11 @@ esp_err_t lvgl_port_init(const lvgl_port_cfg_t *cfg)
         return ESP_ERR_INVALID_STATE;
     }
 
-    /* 板级外设就绪 (竖屏 240x320, 全屏清白) */
+    /* 板级外设就绪 (LVGL 逻辑屏横屏 320x240)。
+     * LCD_Init 全程背光关 (防上一屏残影), 清黑后再点亮, 与开机动画黑底衔接 */
     LCD_Init();
-    LCD_Fill(0, 0, LCD_W - 1, LCD_H - 1, WHITE);
+    lvgl_port_disp_set_madctl(MADCTL_LANDSCAPE);        /* GRAM 地址空间切 320x240 */
+    LCD_Fill(0, 0, LCD_H - 1, LCD_W - 1, BLACK);        /* 横屏全屏: x=0..319, y=0..239 */
     LCD_BLK_Set();
 
     FT6236_Init();      /* 软 I2C + 复位 + 10ms 上报率 (勿再调 touch_input_start, 会抢 I2C) */
@@ -80,6 +85,9 @@ esp_err_t lvgl_port_init(const lvgl_port_cfg_t *cfg)
     if (s_indev == NULL) {
         return ESP_FAIL;
     }
+
+    /* 默认屏黑底: lvgl 任务起跑后首帧与 GRAM 清屏一致, 等 boot 界面接管 (防白闪) */
+    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), 0);
 
     s_lvgl_mux = xSemaphoreCreateMutex();
     if (s_lvgl_mux == NULL) {
