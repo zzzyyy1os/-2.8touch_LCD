@@ -20,6 +20,8 @@
 #include "ui.h"
 #include "weather_ui.h"
 #include "weather_app.h"
+#include "deep_ui.h"
+#include "deep_app.h"
 #include "provision_demo.h"
 
 static const char *TAG = "prov_demo";
@@ -56,6 +58,11 @@ static void weather_takeover_cb(TimerHandle_t timer)
         weather_ui_init();                  /* 动态控件换宽字库 + 时钟定时器 */
         weather_app_flush_cache();          /* 收尾屏期间预取到的数据立即上屏 */
     }
+    deep_ui_init();                         /* DEEP 余额屏 + 双屏滑动切换 */
+    deep_app_flush_cache();
+    if (aidogui_ui.screen1.root) {
+        lv_screen_load(aidogui_ui.screen1.root);    /* 首屏停天气, 长按右半屏去余额屏 */
+    }
     lvgl_port_unlock();
     ESP_LOGI(TAG, "weather UI up");
 }
@@ -66,6 +73,7 @@ static void on_got_ip(const char *ip)
              ip ? ip : "?", SWITCH_TO_WEATHER_MS);
     /* 数据查询立即开跑, 与收尾屏 2.5s 并行, 界面上屏时可能已就绪 */
     weather_app_start();
+    deep_app_start();
     /* 本回调来自 wifi 任务, 延迟切屏交给软件定时器守护任务做 */
     xTimerReset(s_switch_timer, pdMS_TO_TICKS(100));
 }
