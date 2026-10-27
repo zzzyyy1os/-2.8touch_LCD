@@ -9,6 +9,7 @@
 #ifndef WIFI_PROVISION_UI_LVGL_H
 #define WIFI_PROVISION_UI_LVGL_H
 
+#include "lvgl.h"
 #include "wifi_provision.h"
 
 #ifdef __cplusplus
@@ -38,6 +39,15 @@ void wifi_provision_ui_lvgl_set_hold(bool hold);
 
 /** 手动切"连接中"界面 (一般由 /connect 自动触发, 无需调用) */
 void wifi_provision_ui_lvgl_show_connecting(const char *ssid);
+
+/**
+ * @brief 交接界面控制权给应用 (配网完成后切业务界面用)
+ *
+ * 清空内部界面状态, 此后配网回调不再建屏/切屏。返回交出的旧界面 root
+ * (可能为 NULL); 调用方先 lv_screen_load 新界面, 再 lv_obj_delete 旧 root。
+ * 必须在未持 lvgl 锁的任务上下文调用 (内部自己加锁)。
+ */
+lv_obj_t *wifi_provision_ui_lvgl_release(void);
 
 #ifdef __cplusplus
 }

@@ -80,3 +80,7 @@ Desktop.ini
 
 # Secrets: real API token / WiFi credentials never go to GitHub
 main/deepseek_config.h
+main/weather_config.h
+
+# gen_fonts.py 本地安装的 lv_font_conv
+components/aidogui/.lvfont_tools/

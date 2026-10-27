@@ -3,12 +3,11 @@
  * @brief 开机 LOGO 动画
  *
  * 只用 opa/位置动画 (LVGL 9.6 软件渲染不支持缩放/旋转变换, 刻意避开)。
- * 结束回调经 esp_timer 任务转接: anim 完成回调持着 lvgl 锁, 交接逻辑
- * (set_hold 等) 需要在未持锁上下文执行, 避免互斥锁重入死锁。
+ * 结束回调经 FreeRTOS 软件定时器守护任务转接: anim 完成回调持着 lvgl 锁,
+ * 交接逻辑 (set_hold 等) 需要在未持锁上下文执行, 避免互斥锁重入死锁。
  */
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_timer.h"
+#include "freertos/timers.h"
 #include "esp_log.h"
 #include "lvgl.h"
 #include "lvgl_port.h"
@@ -26,7 +25,7 @@ static const char *TAG = "boot_anim";
 
 static lv_obj_t *s_scr;
 static void (*s_done)(void);
-static esp_timer_handle_t s_release_timer;
+static TimerHandle_t s_release_timer;
 
 /* ---------- anim exec 回调 ---------- */
 static void set_opa_cb(void *var, int32_t v)
@@ -39,9 +38,9 @@ static void set_y_cb(void *var, int32_t v)
     lv_obj_set_y(var, v);
 }
 
-static void release_cb(void *arg)
+static void release_cb(TimerHandle_t timer)
 {
-    (void)arg;
+    (void)timer;
     if (s_done) {
         s_done();                       /* 界面交接 (未持 lvgl 锁) */
     }
@@ -60,7 +59,8 @@ static void release_cb(void *arg)
 static void fade_out_completed(lv_anim_t *a)
 {
     (void)a;
-    esp_timer_start_once(s_release_timer, 0);
+    /* 换上下文跳板: 回调持着 lvgl 锁, 交接要回到未持锁任务上下文 */
+    xTimerReset(s_release_timer, pdMS_TO_TICKS(100));
 }
 
 static void fade_in_completed(lv_anim_t *a)
@@ -83,11 +83,10 @@ void boot_anim_start(void (*done)(void))
     s_done = done;
 
     if (s_release_timer == NULL) {
-        const esp_timer_create_args_t targs = {
-            .callback = release_cb,
-            .name = "boot_rel",
-        };
-        if (esp_timer_create(&targs, &s_release_timer) != ESP_OK) {
+        /* 单次触发, 1 tick 后跑 release_cb, 仅作任务上下文跳板 */
+        s_release_timer = xTimerCreate("boot_rel", pdMS_TO_TICKS(10),
+                                       pdFALSE, NULL, release_cb);
+        if (s_release_timer == NULL) {
             ESP_LOGE(TAG, "release timer create failed");
             return;
         }
@@ -102,7 +101,7 @@ void boot_anim_start(void (*done)(void))
 
     s_scr = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(s_scr, lv_color_hex(0x000000), 0);
-    lv_obj_remove_flag(s_scr, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scrollable(s_scr, false);
 
     lv_obj_t *img = lv_image_create(s_scr);
     lv_image_set_src(img, &boot_logo);

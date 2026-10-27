@@ -10,8 +10,8 @@ idf_component_register(
         "ui/lv_provisioning_screen_gen.c"
         "ui/lv_connected_screen_gen.c"
     INCLUDE_DIRS "include" "ui"
-    REQUIRES esp_wifi esp_netif esp_event nvs_flash
-    PRIV_REQUIRES esp_http_server lwip esp_timer esp_system freertos lvgl lvgl_port
+    REQUIRES esp_wifi esp_netif esp_event nvs_flash lvgl
+    PRIV_REQUIRES esp_http_server lwip esp_timer esp_system freertos lvgl_port
 )
 
 # LVGL 头文件用 "lvgl.h" 简单包含 (lvgl 组件的 include 路径不含其父目录,

@@ -1,0 +1,22 @@
+/**
+ * @file weather_config.h.example
+ * @brief 复制为 weather_config.h 后填 API key (weather_config.h 含密钥,
+ *        已被 .gitignore 排除, 不会上传)
+ */
+#ifndef WEATHER_CONFIG_H
+#define WEATHER_CONFIG_H
+
+/* 聚合数据 APPKEY (每个接口各一个): 个人中心 -> 我的数据 -> 对应接口页上方查看 */
+#define JUHE_IP_KEY           "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#define JUHE_WEATHER_KEY      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+/* IP 定位失败 (或返回城市为空) 时的兜底城市 */
+#define WEATHER_CITY_DEFAULT  "杭州"
+
+/* 天气自动刷新周期 (分钟) */
+#define WEATHER_REFRESH_MIN   60
+
+/* NTP 服务器 (时钟/日期联网对时) */
+#define WEATHER_NTP_SERVER    "ntp.aliyun.com"
+
+#endif /* WEATHER_CONFIG_H */

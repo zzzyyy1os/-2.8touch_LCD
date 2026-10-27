@@ -93,6 +93,19 @@ static void reset_btn_wire(lv_obj_t *root)
     }
 }
 
+lv_obj_t *wifi_provision_ui_lvgl_release(void)
+{
+    lv_obj_t *taken = NULL;
+    if (lvgl_port_lock(2000)) {
+        taken = s_scr ? s_scr : s_pending;
+        s_scr = NULL;
+        s_pending = NULL;
+        s_hold = false;
+        lvgl_port_unlock();
+    }
+    return taken;
+}
+
 /* ---------- 界面切换 ---------- */
 static void ui_show_provision(const char *qr_payload)
 {
